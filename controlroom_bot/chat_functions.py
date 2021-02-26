@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Optional, Union
 
 from markdown import markdown
@@ -19,68 +20,65 @@ logger = logging.getLogger(__name__)
 
 async def add_widget_to_room(
     client: AsyncClient,
-    room_id: str
+    room_id: str,
+    widget_url: str,
+    widget_type: str = "m.custom",
+    widget_name: str = "Custom Widget",
+    avatar_mxc: str = None
 ) -> Union[RoomPutStateResponse, RoomPutStateError]:
-    """
-    {
-        "type": "m.custom",
-        "url": "https://meetings-widget.dev.by.openws.de/?theme=$theme&matrix_user_id=$matrix_user_id&matrix_avatar_url=$matrix_avatar_url&matrix_display_name=$matrix_display_name&matrix_room_id=$matrix_room_id",
-        "name": "Stundenplaner",
-        "data": {},
-        "creatorUserId": "@b6a71403-fe70-47f61:matrix.dev.by.openws.de",
-        "id": "!fULhCQAkvxbqUdoFzS%3Amatrix.dev.by.openws.de_%40142fda24-9c20-456a1%3Amatrix.dev.by.openws.de_1613759971479",
-        "roomId": "!fULhCQAkvxbqUdoFzS:matrix.dev.by.openws.de",
-        "eventId": "$AaApQjkiCXttGHZKKsO_wHmLNf4EjA3u7pAcml_XKog",
-        "avatar_url": "mxc://matrix.dev.by.openws.de/KBOkidufhcGdyJreHWEHjzVl"
-    }
+    """Adds a widget to a room and pins it to the central pane for all users.
+    Args:
+        client: The client to communicate to matrix with.
+        room_id: The ID of the room to send the message to.
+        widget_type: The widget type.
+        widget_url: The URL of the widget instance.
+        avatar_mxc: Optional field containing an avatar for the widget
+    Returns:
+        A RoomPutStateResponse if the final request were successful, else an ErrorResponse.
     """
 
     content = {
-        "type": "m.custom",
-        "url": "https://meetings-widget.dev.by.openws.de/?theme=$theme&matrix_user_id=$matrix_user_id&matrix_avatar_url=$matrix_avatar_url&matrix_display_name=$matrix_display_name&matrix_room_id=$matrix_room_id",
-        "name": "Stundenplaner",
+        "type": widget_type,
+        "url": widget_url,
+        "name": widget_name,
         "data": {}
     }
+    if avatar_mxc:
+        content["avatar_url"] = avatar_mxc
 
-    state_key = '%s_%s_%s' % (room_id, '@controlroom-bot:matrix.org', 1392384843543)
+    timestamp = int(round(time.time()))
 
-    result = await client.room_put_state(
-        room_id,
-        "im.vector.modular.widgets",
-        content,
-        state_key
-    )
+    state_key = f"{room_id}_{client.user_id}_{timestamp}"
 
-    return await client.room_put_state(
-        room_id,
-        "io.element.widgets.layout",
-        {
-            "widgets": {
-                state_key: {
-                    "container": "top",
-                    "height": 67,
-                    "width": 100,
-                    "index": 0
+    try:
+        result = await client.room_put_state(
+            room_id,
+            "im.vector.modular.widgets",
+            content,
+            state_key
+        )
+    except RoomPutStateError:
+        logger.exception(f"Unable to post widget to {room_id}")
+
+    try:
+        return await client.room_put_state(
+            room_id,
+            "io.element.widgets.layout",
+            {
+                "widgets": {
+                    state_key: {
+                        "container": "top",
+                        "height": 67,
+                        "width": 100,
+                        "index": 0
+                    }
                 }
-            }
-        },
-        ""
-    )
-    """
-    {
-        "widgets": {
-            "!fULhCQAkvxbqUdoFzS%3Amatrix.dev.by.openws.de_%40142fda24-9c20-456a1%3Amatrix.dev.by.openws.de_1613759971479": {
-                "container": "top",
-                "height": 67,
-                "width": 100,
-                "index": 0
             },
-            "!fULhCQAkvxbqUdoFzS%3Amatrix.dev.by.openws.de_%40142fda24-9c20-456a1%3Amatrix.dev.by.openws.de_1613760937983": {
-                "container": "right"
-            }
-        }
-    }
-    """
+            ""
+        )
+    except RoomPutStateError:
+        logger.exception(f"Unable to pin widget to centre pane in {room_id}")
+
 
 async def send_text_to_room(
     client: AsyncClient,

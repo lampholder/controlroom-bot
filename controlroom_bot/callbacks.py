@@ -114,11 +114,17 @@ class Callbacks:
         # Wait for the room state to sync
         await self.client.sync()
 
-        result = await send_text_to_room(self.client, room.room_id, 'Wilkommen zu kontrollenraum!')
+        result = await send_text_to_room(self.client, room.room_id, "Willkommen im Kontrollraum")
 
         logger.info(result)
 
-        result = await add_widget_to_room(self.client, room.room_id)
+        result = await add_widget_to_room(
+            self.client,
+            room.room_id,
+            "https://meetings-widget.dev.by.openws.de/?theme=$theme&matrix_user_id=$matrix_user_id&matrix_avatar_url=$matrix_avatar_u      rl&matrix_display_name=$matrix_display_name&matrix_room_id=$matrix_room_id",
+            widget_name="Stundenplaner"
+        )
+
         logger.info(result)
 
     async def _reaction(
