@@ -122,7 +122,8 @@ class Callbacks:
             self.client,
             room.room_id,
             self.config.widget_url,
-            widget_name=self.config.widget_name
+            widget_name=self.config.widget_name,
+            widget_avatar=self.config.widget_avatar
         )
 
         logger.info(result)

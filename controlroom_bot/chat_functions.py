@@ -24,7 +24,7 @@ async def add_widget_to_room(
     widget_url: str,
     widget_type: str = "m.custom",
     widget_name: str = "Custom Widget",
-    avatar_mxc: str = None
+    widget_avatar: str = None
 ) -> Union[RoomPutStateResponse, RoomPutStateError]:
     """Adds a widget to a room and pins it to the central pane for all users.
     Args:
@@ -32,7 +32,7 @@ async def add_widget_to_room(
         room_id: The ID of the room to send the message to.
         widget_type: The widget type.
         widget_url: The URL of the widget instance.
-        avatar_mxc: Optional field containing an avatar for the widget
+        widget_avatar: Optional field containing an avatar for the widget
     Returns:
         A RoomPutStateResponse if the final request were successful, else an ErrorResponse.
     """
@@ -43,8 +43,8 @@ async def add_widget_to_room(
         "name": widget_name,
         "data": {}
     }
-    if avatar_mxc:
-        content["avatar_url"] = avatar_mxc
+    if widget_avatar:
+        content["avatar_url"] = widget_avatar
 
     timestamp = int(round(time.time()))
 

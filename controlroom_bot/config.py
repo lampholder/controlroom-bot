@@ -107,6 +107,7 @@ class Config:
 
         self.widget_url = self._get_cfg(["matrix", "widget_url"], required=False)
         self.widget_name = self._get_cfg(["matrix", "widget_name"], required=False)
+        self.widget_avatar = self._get_cfg(["matrix", "widget_avatar"], required=False)
 
     def _get_cfg(
         self,
