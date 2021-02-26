@@ -9,11 +9,78 @@ from nio import (
     MegolmEvent,
     Response,
     RoomSendResponse,
+    RoomPutStateResponse,
+    RoomPutStateError,
     SendRetryError,
 )
 
 logger = logging.getLogger(__name__)
 
+
+async def add_widget_to_room(
+    client: AsyncClient,
+    room_id: str
+) -> Union[RoomPutStateResponse, RoomPutStateError]:
+    """
+    {
+        "type": "m.custom",
+        "url": "https://meetings-widget.dev.by.openws.de/?theme=$theme&matrix_user_id=$matrix_user_id&matrix_avatar_url=$matrix_avatar_url&matrix_display_name=$matrix_display_name&matrix_room_id=$matrix_room_id",
+        "name": "Stundenplaner",
+        "data": {},
+        "creatorUserId": "@b6a71403-fe70-47f61:matrix.dev.by.openws.de",
+        "id": "!fULhCQAkvxbqUdoFzS%3Amatrix.dev.by.openws.de_%40142fda24-9c20-456a1%3Amatrix.dev.by.openws.de_1613759971479",
+        "roomId": "!fULhCQAkvxbqUdoFzS:matrix.dev.by.openws.de",
+        "eventId": "$AaApQjkiCXttGHZKKsO_wHmLNf4EjA3u7pAcml_XKog",
+        "avatar_url": "mxc://matrix.dev.by.openws.de/KBOkidufhcGdyJreHWEHjzVl"
+    }
+    """
+
+    content = {
+        "type": "m.custom",
+        "url": "https://meetings-widget.dev.by.openws.de/?theme=$theme&matrix_user_id=$matrix_user_id&matrix_avatar_url=$matrix_avatar_url&matrix_display_name=$matrix_display_name&matrix_room_id=$matrix_room_id",
+        "name": "Stundenplaner",
+        "data": {}
+    }
+
+    state_key = '%s_%s_%s' % (room_id, '@controlroom-bot:matrix.org', 1392384843543)
+
+    result = await client.room_put_state(
+        room_id,
+        "im.vector.modular.widgets",
+        content,
+        state_key
+    )
+
+    return await client.room_put_state(
+        room_id,
+        "io.element.widgets.layout",
+        {
+            "widgets": {
+                state_key: {
+                    "container": "top",
+                    "height": 67,
+                    "width": 100,
+                    "index": 0
+                }
+            }
+        },
+        ""
+    )
+    """
+    {
+        "widgets": {
+            "!fULhCQAkvxbqUdoFzS%3Amatrix.dev.by.openws.de_%40142fda24-9c20-456a1%3Amatrix.dev.by.openws.de_1613759971479": {
+                "container": "top",
+                "height": 67,
+                "width": 100,
+                "index": 0
+            },
+            "!fULhCQAkvxbqUdoFzS%3Amatrix.dev.by.openws.de_%40142fda24-9c20-456a1%3Amatrix.dev.by.openws.de_1613760937983": {
+                "container": "right"
+            }
+        }
+    }
+    """
 
 async def send_text_to_room(
     client: AsyncClient,

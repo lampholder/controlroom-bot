@@ -12,7 +12,7 @@ from nio import (
 )
 
 from controlroom_bot.bot_commands import Command
-from controlroom_bot.chat_functions import make_pill, react_to_event, send_text_to_room
+from controlroom_bot.chat_functions import make_pill, react_to_event, send_text_to_room, add_widget_to_room
 from controlroom_bot.config import Config
 from controlroom_bot.message_responses import Message
 from controlroom_bot.storage import Storage
@@ -32,6 +32,11 @@ class Callbacks:
         self.store = store
         self.config = config
         self.command_prefix = config.command_prefix
+
+        # A little hack to work around the fact that matrix-nio calls invite() twice when
+        # we receive an invite for some reason
+        self.joined_rooms = {}
+
 
     async def message(self, room: MatrixRoom, event: RoomMessageText) -> None:
         """Callback for when a message event is received
@@ -81,6 +86,11 @@ class Callbacks:
         """
         logger.debug(f"Got invite to {room.room_id} from {event.sender}.")
 
+        if room.room_id in self.joined_rooms:
+            # Skip this invite. Workaround hack explained in this class' constructor
+            del self.joined_rooms[room.room_id]
+            return
+
         # Attempt to join 3 times before giving up
         for attempt in range(3):
             result = await self.client.join(room.room_id)
@@ -97,6 +107,19 @@ class Callbacks:
 
         # Successfully joined room
         logger.info(f"Joined {room.room_id}")
+
+        # Note that we've joined this room
+        self.joined_rooms[room.room_id] = True
+
+        # Wait for the room state to sync
+        await self.client.sync()
+
+        result = await send_text_to_room(self.client, room.room_id, 'Wilkommen zu kontrollenraum!')
+
+        logger.info(result)
+
+        result = await add_widget_to_room(self.client, room.room_id)
+        logger.info(result)
 
     async def _reaction(
         self, room: MatrixRoom, event: UnknownEvent, reacted_to_id: str
