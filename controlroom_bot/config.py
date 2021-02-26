@@ -105,6 +105,9 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
+        self.widget_url = self._get_cfg(["matrix", "widget_url"], required=False)
+        self.widget_name = self._get_cfg(["matrix", "widget_name"], required=False)
+
     def _get_cfg(
         self,
         path: List[str],
