@@ -1,0 +1,16 @@
+[Unit]
+Description=A matrix bot that does amazing things!
+
+[Service]
+Type=simple
+User=controlroom-bot
+Group=controlroom-bot
+WorkingDirectory=/path/to/controlroom-bot/docker
+ExecStart=/usr/bin/docker-compose up controlroom-bot
+ExecStop=/usr/bin/docker-compose stop controlroom-bot
+RemainAfterExit=yes
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
