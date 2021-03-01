@@ -14,6 +14,8 @@ from nio import (
     MegolmEvent,
     RoomMessageText,
     UnknownEvent,
+    ProfileSetDisplayNameError,
+    ProfileGetDisplayNameError
 )
 
 from controlroom_bot.callbacks import Callbacks
@@ -59,6 +61,19 @@ async def main():
     if config.user_token:
         client.access_token = config.user_token
         client.user_id = config.user_id
+
+    if config.displayname:
+        try:
+            response = await client.get_displayname()
+            if response.displayname != config.displayname:
+                logger.info("Displayname has changed from %s to %s" % (response.displayname, config.displayname))
+                try:
+                    result = await client.set_displayname(config.displayname)
+                except ProfileSetDisplayNameError:
+                    logger.error("Unable to update the bot's displayname")
+        except ProfileGetDisplayNameError:
+            logger.error("Couldn't get the bot's displayname")
+
 
     # Set up event callbacks
     callbacks = Callbacks(client, store, config)

@@ -114,7 +114,7 @@ class Callbacks:
         # Wait for the room state to sync
         await self.client.sync()
 
-        result = await send_text_to_room(self.client, room.room_id, "Willkommen im Kontrollraum")
+        result = await send_text_to_room(self.client, room.room_id, self.config.welcome)
 
         logger.info(result)
 
